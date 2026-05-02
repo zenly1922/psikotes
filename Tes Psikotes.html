@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Psikotes Latihan</title>
+<style>
+body { font-family: Arial, sans-serif; background:#f4f4f4; margin:0; }
+.header { background:#d32f2f; color:#fff; padding:15px; text-align:center; }
+.container { padding:20px; }
+.timer { font-size:20px; font-weight:bold; margin-bottom:10px; }
+.table { width:100%; border-collapse:collapse; background:#fff; }
+.table th, .table td { border:1px solid #ddd; padding:8px; text-align:center; }
+.table th { background:#ff7043; color:#fff; }
+.key-row { background:#ffe0b2; font-weight:bold; }
+.option { width:20px; height:20px; }
+.nav { margin-top:15px; display:flex; justify-content:space-between; align-items:center; }
+button { padding:10px 15px; border:none; background:#d32f2f; color:#fff; cursor:pointer; }
+button:disabled { background:#aaa; }
+.score { font-size:18px; font-weight:bold; }
+</style>
+</head>
+<body>
+
+<div class="header">
+<h2>Tes Psikomotor</h2>
+<p>45 Soal / Halaman - 10 Halaman - Waktu 10 Menit</p>
+</div>
+
+<div class="container">
+<div class="timer" id="timer">10:00</div>
+<table class="table" id="soalTable">
+<thead>
+<tr>
+<th>No</th>
+<th>Soal</th>
+<th>A</th>
+<th>B</th>
+<th>C</th>
+<th>D</th>
+<th>E</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+
+<div class="nav">
+<button onclick="prevPage()" id="prevBtn">Sebelumnya</button>
+<span id="pageInfo"></span>
+<button onclick="nextPage()" id="nextBtn">Berikutnya</button>
+</div>
+
+<div class="score" id="scoreBox"></div>
+</div>
+
+<script>
+let currentPage = 1;
+const totalPages = 10;
+const soalPerPage = 45;
+let answers = {};
+
+// KUNCI (angka -> jawaban)
+const keyNumbers = [7,6,8,1,2];
+const keyMap = {
+  7: 'A',
+  6: 'B',
+  8: 'C',
+  1: 'D',
+  2: 'E'
+};
+
+function generateSoal() {
+  const tbody = document.querySelector("#soalTable tbody");
+  tbody.innerHTML = "";
+
+  // tampilkan kunci di atas
+  let keyRow = `<tr class="key-row">
+    <td colspan="2">Kunci</td>
+    ${keyNumbers.map(n => `<td>${n}</td>`).join('')}
+  </tr>`;
+
+  let jawabanRow = `<tr class="key-row">
+    <td colspan="2">Jawaban</td>
+    ${keyNumbers.map(n => `<td>${keyMap[n]}</td>`).join('')}
+  </tr>`;
+
+  tbody.innerHTML += keyRow + jawabanRow;
+
+  for (let i = 1; i <= soalPerPage; i++) {
+    const nomor = (currentPage - 1) * soalPerPage + i;
+
+    // soal 4 angka seperti gambar
+    let nums = [rand(), rand(), rand(), rand()];
+    let soal = nums.join(" ");
+
+    // cari jawaban benar berdasarkan angka terakhir
+    let correct = keyMap[nums[nums.length-1]];
+
+    let row = `<tr>
+      <td>${nomor}</td>
+      <td>${soal}</td>
+      ${["A","B","C","D","E"].map(opt => `
+        <td><input type="radio" name="q${nomor}" value="${opt}" 
+        ${answers[nomor] === opt ? "checked" : ""}
+        onchange="saveAnswer(${nomor}, '${opt}', '${correct}')"></td>
+      `).join("")}
+    </tr>`;
+
+    tbody.innerHTML += row;
+  }
+
+  document.getElementById("pageInfo").innerText = `Halaman ${currentPage} / ${totalPages}`;
+  document.getElementById("prevBtn").disabled = currentPage === 1;
+  document.getElementById("nextBtn").disabled = currentPage === totalPages;
+}
+
+function rand() {
+  return Math.floor(Math.random() * 9) + 1;
+}
+
+function saveAnswer(no, val, correct) {
+  answers[no] = { val, correct };
+}
+
+function nextPage() {
+  if (currentPage < totalPages) {
+    currentPage++;
+    generateSoal();
+  } else {
+    finishTest();
+  }
+}
+
+function prevPage() {
+  if (currentPage > 1) {
+    currentPage--;
+    generateSoal();
+  }
+}
+
+function finishTest() {
+  let score = 0;
+  let total = totalPages * soalPerPage;
+
+  for (let i = 1; i <= total; i++) {
+    if (answers[i] && answers[i].val === answers[i].correct) {
+      score++;
+    }
+  }
+
+  document.getElementById("scoreBox").innerText = `Skor Anda: ${score} / ${total}`;
+}
+
+// TIMER 10 MENIT
+let time = 600;
+function startTimer() {
+  const timerEl = document.getElementById("timer");
+  const interval = setInterval(() => {
+    let minutes = Math.floor(time / 60);
+    let seconds = time % 60;
+    timerEl.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+
+    if (time <= 0) {
+      clearInterval(interval);
+      alert("Waktu habis!");
+      finishTest();
+    }
+    time--;
+  }, 1000);
+}
+
+// INIT
+generateSoal();
+startTimer();
+</script>
+
+</body>
+</html>
